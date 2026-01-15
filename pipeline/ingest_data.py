@@ -3,9 +3,7 @@
 import pandas as pd
 from sqlalchemy import create_engine 
 from tqdm.auto import tqdm
-
-year = 2021 
-month = 1
+import click
 
 dtype = {
     "VendorID": "Int64",
@@ -36,6 +34,9 @@ def ingest_data(url:str, engine, target_table:str, chunksize: int = 100000,) -> 
     df_iter = pd.read_csv(url, dtype=dtype, parse_dates=parse_dates, iterator=True, chunksize=chunksize)
     first_chunk = next(df_iter)
     first_chunk.head(0).to_sql(name=target_table, con=engine, if_exists="replace")
+    print(f"Table {target_table} created")
+
+    first_chunk.to_sql(name=target_table, con=engine, if_exists="append")
     print(f"Inserted first chunk: {len(first_chunk)}")
 
     for df_chunk in tqdm(df_iter):
@@ -45,30 +46,31 @@ def ingest_data(url:str, engine, target_table:str, chunksize: int = 100000,) -> 
     print(f"done ingesting to {target_table}")
 
 
-def main():
-    pg_user = 'root'
-    pg_pass = 'root'
-    pg_host = 'localhost'
-    pg_port = 5432
-    pg_db = 'ny_taxi'
-    year = 2021 
-    month = 1
-    chunksize = 100000
-    target_table = 'yellow_taxi_data'
-
+@click.command()
+@click.option('--pg-user', default='root', show_default=True, help='Postgres user')
+@click.option('--pg-pass', default='root', show_default=True, help='Postgres password')
+@click.option('--pg-host', default='localhost', show_default=True, help='Postgres host')
+@click.option('--pg-port', default=5432, show_default=True, type=int, help='Postgres port')
+@click.option('--pg-db', default='ny_taxi', show_default=True, help='Postgres database')
+@click.option('--url', default=None, help='URL or path to CSV file (overrides year/month)')
+@click.option('--year', default=None, type=int, help='Year for NYC taxi data')
+@click.option('--month', default=None, type=int, help='Month for NYC taxi data')
+@click.option('--chunksize', default=100000, show_default=True, type=int, help='CSV chunksize')
+@click.option('--target-table', default='yellow_taxi_data', help='Target table name')
+def main(pg_user, pg_pass, pg_host, pg_port, pg_db, url, year, month, chunksize, target_table):
+    # Build URL from year/month if not provided
+    if url is None:
+        if year is None or month is None:
+            raise ValueError("Either --url or both --year and --month must be provided")
+        url_prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow'
+        url = f'{url_prefix}/yellow_tripdata_{year:04d}-{month:02d}.csv.gz'
+    
     engine = create_engine(f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}')
-    url_prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow'
 
-    url = f'{url_prefix}/yellow_tripdata_{year:04d}-{month:02d}.csv.gz'
-
-    ingest_data(url=url, engine=engine, target_table=target_table,chunksize=chunksize)
+    ingest_data(url=url, engine=engine, target_table=target_table, chunksize=chunksize)
 
 if __name__ == '__main__':
     main()
-
-
-
-
 
 
 

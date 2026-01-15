@@ -1,0 +1,38 @@
+services:
+  pgdatabase:
+    image: postgres:18
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ny_taxi
+      # THE FIX: Remember this from our manual run? 
+      # Push data into a subfolder to fix PG18 volume issues.
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ny_taxi_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    # THE FIX: You need this block if you use "condition: service_healthy" below
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d ny_taxi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    volumes:
+      # THE SYNTAX FIX: Closed the quote here
+      - "pgadmin_data:/var/lib/pgadmin"
+    ports:
+      - "8085:80"
+    depends_on:
+      pgdatabase:
+        condition: service_healthy
+
+volumes:
+  ny_taxi_postgres_data:
+  pgadmin_data:
