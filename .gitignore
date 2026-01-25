@@ -1,7 +1,28 @@
-
-# Secrets
+# --- Secrets (CRITICAL) ---
 .env
+.env.*
 *.json
-*.key
 *.pem
-credentials/
+*.key
+
+# --- Terraform ---
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.ipynb_checkpoints/
+
+# --- OS Junk Files ---
+.DS_Store
+Thumbs.db
+
+# --- Project Specific ---
+# Ignore raw data files so you don't upload huge CSVs to GitHub
+data/
