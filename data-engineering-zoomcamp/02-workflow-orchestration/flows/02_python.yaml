@@ -1,0 +1,53 @@
+# 1. METADATA
+# Just like the previous flow, ID and Namespace are required.
+# The description is actually visible in the Kestra UI, which helps your team know what this does.
+id: 02_python
+namespace: zoomcamp
+
+description: This flow will install the pip package in a Docker container...
+
+tasks:
+  # 2. THE TASK TYPE
+  # We are telling Kestra: "We want to execute a Python script."
+  # By default, Kestra would try to run this on the Kestra server itself (risky!).
+  - id: collect_stats
+    type: io.kestra.plugin.scripts.python.Script
+
+    # 3. THE TASK RUNNER (The "Safety Box")
+    # This is the most critical part of this file.
+    # Instead of running Python on the server, we tell Kestra:
+    # "Ask the Docker Daemon to create a NEW container just for this task."
+    # If this script crashes or eats 10GB of RAM, only this container dies. The server stays safe.
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+
+    # 4. THE ENVIRONMENT
+    # We specify exactly which OS/Python version we want.
+    # 'python:slim' is a small Linux image with Python installed.
+    containerImage: python:slim
+
+    # 5. DEPENDENCY MANAGEMENT (No more "pip install" conflicts)
+    # Kestra sees this list and runs `pip install` inside the container BEFORE your script starts.
+    # We need 'requests' to talk to the web.
+    # We need 'kestra' to talk back to the Orchestrator.
+    dependencies:
+      - requests
+      - kestra
+
+    # 6. THE ACTUAL CODE
+    script: |
+      from kestra import Kestra
+      import requests
+
+      # Standard Python function to fetch data from an API
+      def get_docker_image_downloads(image_name: str = "kestra/kestra"):
+          url = f"https://hub.docker.com/v2/repositories/{image_name}/"
+          response = requests.get(url)
+          data = response.json()
+          downloads = data.get('pull_count', 'Not available')
+          return downloads
+
+      # Execute the function
+      downloads = get_docker_image_downloads()
+
+      # 7. SENDING DATA BACK (

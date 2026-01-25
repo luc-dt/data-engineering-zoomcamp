@@ -1,0 +1,35 @@
+id: 07_gcp_setup
+namespace: zoomcamp
+
+tasks:
+  # 1. CREATE DATA LAKE (GCS Bucket)
+  # This creates the "Folder" in the cloud where we will dump our CSVs.
+  - id: create_gcs_bucket
+    type: io.kestra.plugin.gcp.gcs.CreateBucket
+    # Idempotency check: If the bucket already exists, don't crash. Just move on.
+    ifExists: SKIP
+    # Storage Class: REGIONAL is cheaper and faster if your Compute (Kestra)
+    # is in the same region (e.g., europe-west2).
+    storageClass: REGIONAL
+    # Reads the name you saved in the previous flow (06_gcp_kv).
+    name: "{{kv('GCP_BUCKET_NAME')}}"
+
+  # 2. CREATE DATA WAREHOUSE (BigQuery Dataset)
+  # This creates the "Database" where your tables (yellow_tripdata) will live.
+  - id: create_bq_dataset
+    type: io.kestra.plugin.gcp.bigquery.CreateDataset
+    name: "{{kv('GCP_DATASET')}}"
+    ifExists: SKIP
+
+# 3. GLOBAL CONFIGURATION (The "Magic" Section)
+# Instead of configuring authentication on every single task above,
+# we define it once here. Kestra injects these values into every GCP task.
+pluginDefaults:
+  - type: io.kestra.plugin.gcp
+    values:
+      # CRITICAL: This line expects your JSON Service Account Key to be in the KV Store.
+      # See the warning below!
+      serviceAccount: "{{kv('GCP_CREDS')}}"
+      projectId: "{{kv('GCP_PROJECT_ID')}}"
+      location: "{{kv('GCP_LOCATION')}}"
+      bucket: "{{kv('GCP_BUCKET_NAME')}}"

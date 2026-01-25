@@ -1,0 +1,39 @@
+id: 06_gcp_kv
+namespace: zoomcamp
+
+tasks:
+  # 1. SET PROJECT ID
+  - id: gcp_project_id
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_PROJECT_ID
+    kvType: STRING
+    value: kestra-sandbox-485104
+
+  # 2. SET SERVER LOCATION
+  - id: gcp_location
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_LOCATION
+    kvType: STRING
+    value: us-central1
+
+  # 3. SET BUCKET NAME (must be globally unique)
+  - id: gcp_bucket_name
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_BUCKET_NAME
+    kvType: STRING
+    value: zoomcamp-luc-vn-2026-final
+
+  # 4. SET BIGQUERY DATASET
+  - id: gcp_dataset
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_DATASET
+    kvType: STRING
+    value: zoomcamp
+
+  # 5. SET GCP CREDS SECURELY (NO JSON IN GIT)
+  # Store the actual JSON in Kestra Secrets (key name: GCP_CREDS), or as an env var.
+  - id: gcp_creds
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_CREDS
+    kvType: STRING
+    value: "{{ secret('GCP_CREDS') }}"
