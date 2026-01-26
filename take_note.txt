@@ -1,0 +1,43 @@
+# Question_1
+docker run -it --entrypoint bash python:3.13
+----> 25.3
+
+# Question 2
+----> postgres:5432
+
+# Question 3
+
+-- QUESTION 3: Counting Short Trips
+SELECT COUNT(*) AS number_trip_Novem_2025
+FROM public."green_tripdata_2025-11"
+WHERE lpep_pickup_datetime >= '2025-11-01 00:00:00' 
+	AND lpep_pickup_datetime < '2025-12-01 00:00:00' 
+	AND trip_distance <= 1;
+	
+-- Question 4. Longest trip for each day
+SELECT 
+	CAST(lpep_pickup_datetime AS DATE) AS pickup_day,
+	MAX(trip_distance) AS max_dist
+FROM 
+	public."green_tripdata_2025-11"
+WHERE trip_distance < 100 
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 1;
+
+-- Question 5. Biggest pickup zone
+WITH largest_total_amount_by_location AS(
+	SELECT "PULocationID", SUM(total_amount) AS total_amount_by_Location
+	FROM public."green_tripdata_2025-11" AS green
+	WHERE CAST(lpep_pickup_datetime AS DATE) = '2025-11-18'
+	GROUP BY "PULocationID"
+	ORDER BY 2 DESC
+	LIMIT 1
+)
+	SELECT zones.Zone
+	FROM largest_total_amount_by_location AS locations
+		INNER JOIN public.zones AS zones ON locations."PULocationID" = zones."LocationID"
+
+
+
+

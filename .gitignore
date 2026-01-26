@@ -25,4 +25,4 @@ Thumbs.db
 
 # --- Project Specific ---
 # Ignore raw data files so you don't upload huge CSVs to GitHub
-data/
+data/ny_data/
