@@ -1,6 +1,0 @@
-# Question_1
-docker run -it --entrypoint bash python:3.13
-----> 25.3
-
-# Question 2
-----> postgres:5432
