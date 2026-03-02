@@ -1,0 +1,13 @@
+name: nyc_taxi
+schedule: daily
+start_date: "2025-01-01"
+default_connections:
+  duckdb: duckdb-default
+
+variables:
+  taxi_types:
+    type: array  # should be: array
+    items:
+      type: string  # should be: string
+    default: ["yellow"]  
+
