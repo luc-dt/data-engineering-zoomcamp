@@ -1,0 +1,30 @@
+# Virtual environment
+.venv/
+
+# DuckDB database files
+*.duckdb
+*.duckdb.wal
+
+# Marimo auto-generated
+__marimo__/
+
+# Cursor IDE
+.cursor/
+
+# dlt secrets (never push secrets!)
+.dlt/secrets.toml
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# uv
+.python-version
+
+# Temp files
+temp_*.py
+
+# OS files
+.DS_Store
+Thumbs.db
