@@ -61,3 +61,10 @@ Thumbs.db
 
 
 *.duckdb
+.bruin.yml
+logs/runs
+logs/*.log
+logs/queries*.parquet
+*.crc
+_SUCCESS
+yellow_2025_11_partitioned/
