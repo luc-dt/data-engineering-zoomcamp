@@ -1,4 +1,3 @@
-cat > /d/data-engineering-zoomcamp/homework/hw_module_6/README.md << 'EOF'
 # Module 6 Homework — Batch Processing with Spark
 
 ## What I Learned
