@@ -1,0 +1,105 @@
+# WORKSHOP TASKS:
+# 1. Build the Flink image: docker compose build
+# 2. Start the cluster: docker compose up -d
+# 3. Access Redpanda Console: http://localhost:8082
+# 4. Access Flink Dashboard: http://localhost:8081
+# 5. Connect to Postgres: localhost:5432 (user: postgres, db: postgres)
+
+services:
+  # Task: Streaming Message Broker
+  # Responsibility: Ingest and store events for real-time processing.
+  redpanda:
+    image: redpandadata/redpanda:v25.3.9
+    command:
+      - redpanda
+      - start
+      - --smp
+      - '1'
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - '1'
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr
+      - PLAINTEXT://0.0.0.0:28082,OUTSIDE://0.0.0.0:18082
+      - --advertise-pandaproxy-addr
+      - PLAINTEXT://redpanda:28082,OUTSIDE://localhost:18082
+      - --rpc-addr
+      - 0.0.0.0:33145
+      - --advertise-rpc-addr
+      - redpanda:33145
+    ports:
+      - 18082:18082
+      - 9092:9092
+      - 28082:28082
+      - 29092:29092
+
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda-console
+    depends_on:
+      - redpanda
+    ports:
+      - 8082:8080
+    environment:
+      - KAFKA_BROKERS=redpanda:29092
+
+  # Task: Flink Job Manager
+  # Responsibility: Orchestrates job execution, resource management, and state coordination.
+  jobmanager:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.flink
+    image: pyflink-workshop        # name the build image
+    pull_policy: never             # don't look for it on Docker Hub
+    expose:
+      - "6123"
+    ports:
+      - "8081:8081"                # Web UI
+    volumes:
+      - ./:/opt/flink/usrlib
+      - ./src/:/opt/src            # code lives here
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager    # how workets find the brain
+        jobmanager.memory.process.size: 1600m
+
+  # Task: Flink Task Manager
+  # Responsibility: Executes the actual stream processing operators (data source, map, sink).
+  taskmanager:
+    image: pyflink-workshop       # reuse the already-built image
+    pull_policy: never
+    expose:
+      - "6121"
+      - "6122"
+    volumes:
+      - ./:/opt/flink/usrlib
+      - ./src/:/opt/src
+    depends_on:
+      - jobmanager               # start after Job Manager
+    command: taskmanager --taskmanager.registration.timeout 5 min
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.memory.process.size: 1728m
+        taskmanager.numberOfTaskSlots: 15      # capacity 
+        parallelism.default: 3
+
+  # Task: Analytical Database (Sink)
+  # Responsibility: Persist processed aggregates for visualization and analysis.
+  postgres:
+    image: postgres:18
+    restart: on-failure
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
