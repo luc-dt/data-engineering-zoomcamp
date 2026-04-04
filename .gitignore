@@ -68,3 +68,5 @@ logs/queries*.parquet
 *.crc
 _SUCCESS
 yellow_2025_11_partitioned/
+*.json
+*.json
